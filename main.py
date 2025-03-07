@@ -1,5 +1,5 @@
 import streamlit as st
-st.set_page_config(layout="wide")  # Ensure this is the first Streamlit command
+st.set_page_config(layout="wide")  
 
 import geemap.foliumap as geemap
 import geopandas as gpd
@@ -12,14 +12,14 @@ from datetime import datetime
 from streamlit_folium import st_folium
 from fetch_era5_soil_moisture import get_era5_soil_moisture
 
-# Authenticate and initialize Earth Engine
+# Authenticate EE 
 try:
     ee.Initialize()
 except Exception as e:
     st.error("Failed to initialize Google Earth Engine. Ensure authentication is set up.")
 
-# Create three columns
-col1, col2, col3 = st.columns([1, 2, 1])  # Middle column is wider for the map
+# 3 col view
+col1, col2, col3 = st.columns([1, 2, 1])  
 
 with col1:
     st.subheader("Risk Metric 1 - CHIRPS Data")
@@ -29,17 +29,17 @@ with col3:
     st.subheader("Risk Metric 2 - ERA5 Soil Moisture")
     placeholder_chart2 = st.empty()
 
-# Initialize geemap in the middle column
+# Place map in middle col
 with col2:
     st.subheader("Select Area of Interest")
     m = geemap.Map()
     map_data = st_folium(m, height=500, width=700)
 
-# Function to fetch CHIRPS data from GEE
+# Fetch CHIRPS
 def get_chirps_data(aoi):
     collection = ee.ImageCollection("UCSB-CHG/CHIRPS/PENTAD")
     
-    # Reduce to mean over AOI
+    # Reducer for mean over AOI
     def reduce_region(image):
         mean = image.reduceRegion(
             reducer=ee.Reducer.mean(),
@@ -58,7 +58,7 @@ def get_chirps_data(aoi):
     
     return pd.DataFrame({"Date": pd.to_datetime(dates), "Rainfall (mm)": time_series})
 
-# Process AOI drawn on the map
+# Process drawn
 if map_data and 'last_active_drawing' in map_data:
     drawn_features = map_data["all_drawings"]
     if drawn_features:
@@ -66,10 +66,10 @@ if map_data and 'last_active_drawing' in map_data:
         aoi = ee.Geometry.Polygon(geojson_data["geometry"]["coordinates"])  # Convert AOI to EE format
         st.session_state["aoi"] = aoi  # Store AOI in session state
         
-        # Compute AOI area in km^2
+        # Get AOI area in km^2
         aoi_area = aoi.area().divide(1e6).getInfo()
         
-        # Display success message with formatted text
+        # Display AOI area
         st.success("AOI captured successfully!")
         st.markdown(f"### Area: {aoi_area:.2f} km²")
 
@@ -80,7 +80,7 @@ if map_data and 'last_active_drawing' in map_data:
                 df = get_chirps_data(aoi)
                 if not df.empty:
                     
-                    # Plot CHIRPS rainfall data with standardized style
+                    # Plot CHIRPS rainfall data 
                     fig, ax = plt.subplots(figsize=(8, 5))
                     ax.plot(df['Date'], df['Rainfall (mm)'], marker='o', linestyle='-', color='b', label='Rainfall')
                     ax.set_title("CHIRPS Rainfall Data (Jan 2024 - Present)", fontsize=14)
@@ -103,7 +103,7 @@ if map_data and 'last_active_drawing' in map_data:
                 df_soil = get_era5_soil_moisture(aoi)
                 if not df_soil.empty:
                     
-                    # Plot ERA5 soil moisture data with standardized style
+                    # Plot ERA5 soil moisture data 
                     fig, ax = plt.subplots(figsize=(8, 5))
                     ax.plot(df_soil['Date'], df_soil['Soil Moisture'], marker='o', linestyle='-', color='r', label='Soil Moisture')
                     ax.set_title("ERA5 Soil Moisture (Jan 2024 - Present)", fontsize=14)
@@ -119,4 +119,3 @@ if map_data and 'last_active_drawing' in map_data:
             except Exception as e:
                 st.error(f"Error fetching ERA5 soil moisture data from GEE: {e}")
 
-# Placeholder for additional risk metric calculations (to be added later)
