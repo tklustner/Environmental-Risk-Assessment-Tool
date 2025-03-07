@@ -4,7 +4,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from datetime import datetime
 
-# Authenticate and initialize Earth Engine
+# Authenticate EE
 try:
     ee.Initialize()
 except Exception as e:
@@ -14,10 +14,10 @@ except Exception as e:
 def get_era5_soil_moisture(aoi):
     collection = ee.ImageCollection("ECMWF/ERA5_LAND/DAILY_AGGR")
     
-    # Use correct soil moisture band for top layer
+    # Get soil moisture band for top layer
     soil_moisture_band = "volumetric_soil_water_layer_1"
     
-    # Reduce to mean over AOI
+    # Reducer for AOI mean
     def reduce_region(image):
         mean = image.reduceRegion(
             reducer=ee.Reducer.mean(),
