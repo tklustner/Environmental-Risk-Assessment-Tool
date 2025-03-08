@@ -11,6 +11,7 @@ import ee
 from datetime import datetime
 from streamlit_folium import st_folium
 from fetch_era5_soil_moisture import get_era5_soil_moisture
+from fetch_ndvi import get_ndvi_data  # Add import for NDVI function
 
 # Authenticate EE 
 try:
@@ -24,9 +25,12 @@ col1, col2, col3 = st.columns([1, 2, 1])
 with col1:
     st.subheader("Risk Metric 1 - CHIRPS Data")
     placeholder_chart1 = st.empty()
-    
+    # Sidebar Navigation
+st.sidebar.page_link("main.py", label="Home", icon="🏠")
+#st.sidebar.page_link("second_page.py", label="Overlay Mapping", icon="🗺️")
+
 with col3:
-    st.subheader("Risk Metric 2 - ERA5 Soil Moisture")
+    st.subheader("Vegetation Health (NDVI)")
     placeholder_chart2 = st.empty()
 
 # Place map in middle col
@@ -69,7 +73,7 @@ if map_data and 'last_active_drawing' in map_data:
         # Get AOI area in km^2
         aoi_area = aoi.area().divide(1e6).getInfo()
         
-        # Display AOI area
+        # Display AOI
         st.success("AOI captured successfully!")
         st.markdown(f"### Area: {aoi_area:.2f} km²")
 
@@ -96,26 +100,85 @@ if map_data and 'last_active_drawing' in map_data:
             except Exception as e:
                 st.error(f"Error fetching CHIRPS data from GEE: {e}")
 
-        # Fetch ERA5 Soil Moisture Data and display it in col3
+        # Fetch NDVI Data and display it in col3
         with col3:
-            st.caption("Fetching ERA5 Soil Moisture Data from GEE...")
+            st.caption("Fetching NDVI Data...")
+            try:
+                df_ndvi = get_ndvi_data(aoi)
+                if not df_ndvi.empty:
+                    # Plot NDVI data  
+                    fig, ax = plt.subplots(figsize=(8, 5))
+                    ax.plot(df_ndvi['Date'], df_ndvi['NDVI'], marker='o', linestyle='-', color='g')
+                    ax.set_title("Vegetation Health Index (NDVI)", fontsize=14)
+                    ax.set_xlabel("Date", fontsize=12)
+                    ax.set_ylabel("NDVI", fontsize=12)
+                    ax.grid(True, linestyle='--', alpha=0.6)
+                    ax.set_ylim(-1, 1)
+                    
+                    # Add color bands for NDVI interpretation
+                    ax.axhspan(-1, 0, alpha=0.2, color='brown', label='Water/Non-vegetation')
+                    ax.axhspan(0, 0.2, alpha=0.2, color='yellow', label='Bare Soil')
+                    ax.axhspan(0.2, 0.4, alpha=0.2, color='yellowgreen', label='Sparse Vegetation')
+                    ax.axhspan(0.4, 1, alpha=0.2, color='green', label='Dense Vegetation')
+                    
+                    plt.xticks(rotation=45)
+                    ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+                    plt.tight_layout()
+                    
+                    st.pyplot(fig)
+                    
+                    # Display NDVI statistics
+                    st.caption("NDVI Statistics")
+                    cols = st.columns(3)
+                    with cols[0]:
+                        st.metric("Average NDVI", f"{df_ndvi['NDVI'].mean():.2f}")
+                    with cols[1]:
+                        st.metric("Max NDVI", f"{df_ndvi['NDVI'].max():.2f}")
+                    with cols[2]:
+                        st.metric("Min NDVI", f"{df_ndvi['NDVI'].min():.2f}")
+                else:
+                    st.error("No NDVI data retrieved for the AOI.")
+            except Exception as e:
+                st.error(f"Error fetching NDVI data: {e}")
+
+        # Add ERA5 Soil Moisture visualization
+        with col1:
+            st.markdown("---")  # Add a visual separator
+            st.subheader("Soil Moisture")
+            st.caption("Fetching ERA5 Soil Moisture Data...")
             try:
                 df_soil = get_era5_soil_moisture(aoi)
                 if not df_soil.empty:
                     
                     # Plot ERA5 soil moisture data 
                     fig, ax = plt.subplots(figsize=(8, 5))
-                    ax.plot(df_soil['Date'], df_soil['Soil Moisture'], marker='o', linestyle='-', color='r', label='Soil Moisture')
-                    ax.set_title("ERA5 Soil Moisture (Jan 2024 - Present)", fontsize=14)
+                    ax.plot(df_soil['Date'], df_soil['Soil Moisture'], 
+                           marker='o', linestyle='-', color='blue')
+                    ax.set_title("ERA5 Soil Moisture", fontsize=14)
                     ax.set_xlabel("Date", fontsize=12)
                     ax.set_ylabel("Soil Moisture (m³/m³)", fontsize=12)
                     ax.grid(True, linestyle='--', alpha=0.6)
-                    ax.legend()
                     plt.xticks(rotation=45)
+                    plt.tight_layout()
                     
                     st.pyplot(fig)
+                    
+                    # Show soil moisture stats
+                    st.caption("Soil Moisture Statistics")
+                    cols = st.columns(3)
+                    with cols[0]:
+                        st.metric("Average", f"{df_soil['Soil Moisture'].mean():.3f} m³/m³")
+                    with cols[1]:
+                        st.metric("Max", f"{df_soil['Soil Moisture'].max():.3f} m³/m³")
+                    with cols[2]:
+                        st.metric("Min", f"{df_soil['Soil Moisture'].min():.3f} m³/m³")
                 else:
                     st.error("No soil moisture data retrieved for the AOI.")
             except Exception as e:
-                st.error(f"Error fetching ERA5 soil moisture data from GEE: {e}")
+                st.error(f"Error fetching ERA5 soil moisture data: {e}")
+
+
+# Placeholder for additional risk metric calculations (to be added later)
+
+
 
