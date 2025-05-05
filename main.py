@@ -1,7 +1,7 @@
 import streamlit as st
 st.set_page_config(layout="wide")
 
-import geemap.foliumap as geemap
+from geemap.foliumap import Map
 import geopandas as gpd
 import json
 import requests
@@ -33,7 +33,7 @@ with col3:
 with col2:
     st.subheader("🗺️ Select Area of Interest (≤ 10000 km² recommended)", anchor=False)
     st.write("E.g. Bangkok Metropolitan Area | Sundarbans Mangrove Forest | Gulf of Honduras")
-    m = geemap.Map()
+    m = Map()
     map_data = st_folium(m, height=600, width=800)
 
 # Fetch CHIRPS rainfall data
