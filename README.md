@@ -1,6 +1,6 @@
 # 🌍 Environmental Risk Assessment Dashboard
 
-This Streamlit-based tool allows users to explore environmental risks for any selected area of interest (AOI) under 10,000 km². It integrates live Earth Engine data sources to monitor rainfall, soil moisture, and vegetation health, and automatically calculates a simple environmental risk score.
+This Streamlit-based tool allows users to explore environmental risks for any selected area of interest (AOI) under 10,000 km². It integrates live Earth Engine data sources to monitor rainfall, soil moisture, and vegetation health, and automatically calculates a simple environmental risk score. Users can also download their data.
 
 ## 🚀 Features
 
