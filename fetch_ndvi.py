@@ -11,66 +11,93 @@ except Exception as e:
     st.error("Failed to initialize Google Earth Engine. Ensure authentication is set up.")
 
 def get_ndvi_data(aoi):
-    """Fetch NDVI data from Sentinel-2 imagery"""
-    # Function to mask clouds and add NDVI
-    def processImage(image):
-        # Get cloud probability
-        clouds = image.select('MSK_CLDPRB')
-        # Make a mask from cloud probability
-        cloudMask = clouds.lt(20)  # Less than 20% cloud probability
-        
-        # Apply cloud mask and calculate NDVI
-        masked = image.updateMask(cloudMask).divide(10000)
-        ndvi = masked.normalizedDifference(['B8', 'B4']).rename('NDVI')
-        
-        # Get the date
-        date = ee.Date(image.get('system:time_start'))
-        
-        # Calculate mean NDVI for the AOI
-        mean = ndvi.reduceRegion(
-            reducer=ee.Reducer.mean(),
-            geometry=aoi,
-            scale=10,
-            maxPixels=1e9
-        )
-        
-        # Return a feature with date and NDVI value
-        return ee.Feature(None, {
-            'date': date.format('YYYY-MM-dd'),
-            'NDVI': mean.get('NDVI')
-        })
+    """Try Sentinel-2 NDVI with cloud masking; fallback to MODIS if empty."""
+    import ee
+    import pandas as pd
+    from datetime import datetime
 
-    try:
-        # Get Sentinel-2 surface reflectance data
+    def sentinel_ndvi(aoi):
+        def process_image(image):
+            clouds = image.select('MSK_CLDPRB')
+            cloud_mask = clouds.lt(20)
+            masked = image.updateMask(cloud_mask).divide(10000)
+            ndvi = masked.normalizedDifference(['B8', 'B4']).rename('NDVI')
+
+            mean_ndvi = ndvi.reduceRegion(
+                reducer=ee.Reducer.mean(),
+                geometry=aoi,
+                scale=10,
+                maxPixels=1e9
+            )
+
+            return ee.Feature(None, {
+                'NDVI': mean_ndvi.get('NDVI'),
+                'Date': ee.Date(image.get('system:time_start')).format('YYYY-MM-dd')
+            })
+
         start_date = '2024-01-01'
         end_date = datetime.today().strftime('%Y-%m-%d')
-        
+
         collection = ee.ImageCollection('COPERNICUS/S2_SR') \
             .filterDate(start_date, end_date) \
             .filterBounds(aoi) \
             .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 20))
-        
-        # Process the collection
-        features = collection.map(processImage).getInfo()['features']
-        
-        # Filter out any null values and create DataFrame
-        valid_features = [
-            f['properties'] for f in features 
-            if f['properties']['NDVI'] is not None and f['properties']['date'] is not None
-        ]
-        
-        if not valid_features:
-            return pd.DataFrame()  # Return empty DataFrame if no valid data
-        
-        df = pd.DataFrame(valid_features)
-        df['Date'] = pd.to_datetime(df['date'])
-        df = df[['Date', 'NDVI']].sort_values('Date')
-        
-        return df.dropna()
+
+        features = collection.map(process_image)
+        feature_collection = ee.FeatureCollection(features)
+        props = feature_collection.getInfo()["features"]
+
+        df = pd.DataFrame([f["properties"] for f in props if f["properties"].get("NDVI") is not None])
+        if df.empty:
+            return pd.DataFrame()
+
+        df['Date'] = pd.to_datetime(df['Date'])
+        return df[['Date', 'NDVI']].dropna().sort_values('Date')
+
+    def modis_ndvi(aoi):
+        collection = ee.ImageCollection("MODIS/061/MOD13Q1") \
+            .select("NDVI") \
+            .filterDate("2024-01-01", datetime.today().strftime('%Y-%m-%d')) \
+            .filterBounds(aoi)
+
+        def process(image):
+            mean = image.reduceRegion(
+                ee.Reducer.mean(), aoi, 250, bestEffort=True)
+            return ee.Feature(None, {
+                "NDVI": ee.Number(mean.get("NDVI")).multiply(0.0001),
+                "Date": ee.Date(image.get("system:time_start")).format("YYYY-MM-dd")
+            })
+
+        features = collection.map(process_image)
+        feature_collection = ee.FeatureCollection(features)
+        props = feature_collection.getInfo()["features"]
+
+        df = pd.DataFrame([f["properties"] for f in props if f["properties"].get("NDVI") is not None])
+        if df.empty:
+            return pd.DataFrame()
+
+        df["Date"] = pd.to_datetime(df["Date"])
+        return df[["Date", "NDVI"]].dropna().sort_values("Date")
+    
+    try:
+        df = sentinel_ndvi(aoi)
+        if not df.empty:
+            print("✅ Using Sentinel-2 NDVI")
+            return df
+        print("⚠️ Sentinel-2 NDVI empty. Falling back to MODIS.")
+
+        df = modis_ndvi(aoi)
+        if not df.empty:
+            print("✅ Using MODIS NDVI")
+            return df
+        print("❌ MODIS NDVI also returned empty.")
+        return pd.DataFrame()
 
     except Exception as e:
-        print(f"Error processing NDVI data: {str(e)}")
+        print(f"NDVI fetch error: {e}")
         return pd.DataFrame()
+
+   
 
 # Streamlit UI
 st.title("Vegetation Health Monitor (NDVI)")

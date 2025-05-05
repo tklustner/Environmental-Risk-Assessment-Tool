@@ -42,25 +42,25 @@ st.title("ERA5 Soil Moisture Data Fetcher")
 if "aoi" in st.session_state:
     aoi = st.session_state["aoi"]
     
-    st.caption("Fetching ERA5 Soil Moisture Data...")
-    try:
-        df = get_era5_soil_moisture(aoi)
-        if not df.empty:
-            st.success("ERA5 soil moisture data retrieved successfully!")
-            
-            # Plot ERA5 soil moisture data
-            fig, ax = plt.subplots(figsize=(10, 5))
-            ax.plot(df['Date'], df['Soil Moisture'], marker='o', linestyle='-', color='b')
-            ax.set_title("ERA5 Soil Moisture Data (Jan 2024 - Present)", fontsize=14)
-            ax.set_xlabel("Date", fontsize=12)
-            ax.set_ylabel("Soil Moisture (m³/m³)", fontsize=12)
-            ax.grid(True, linestyle='--', alpha=0.6)
-            plt.xticks(rotation=45)
-            
-            st.pyplot(fig)
+with st.spinner('Loading Soil Moisture Data...'):
+        try:
+            df = get_era5_soil_moisture(aoi)
+            if not df.empty:
+                st.success("ERA5 soil moisture data retrieved successfully!")
+                
+                # Plot ERA5 soil moisture data
+                fig, ax = plt.subplots(figsize=(10, 5))
+                ax.plot(df['Date'], df['Soil Moisture'], marker='o', linestyle='-', color='b')
+                ax.set_title("ERA5 Soil Moisture Data (Jan 2024 - Present)", fontsize=14)
+                ax.set_xlabel("Date", fontsize=12)
+                ax.set_ylabel("Soil Moisture (m³/m³)", fontsize=12)
+                ax.grid(True, linestyle='--', alpha=0.6)
+                plt.xticks(rotation=45)
+                
+                st.pyplot(fig)
+            else:
+                st.error("No soil moisture data retrieved for the AOI.")
+        except Exception as e:
+            st.error(f"Error fetching ERA5 soil moisture data from GEE: {e}")
         else:
-            st.error("No soil moisture data retrieved for the AOI.")
-    except Exception as e:
-        st.error(f"Error fetching ERA5 soil moisture data from GEE: {e}")
-else:
-    st.warning("Please draw an AOI on the map first.")
+            st.warning("Please draw an AOI on the map first.")
