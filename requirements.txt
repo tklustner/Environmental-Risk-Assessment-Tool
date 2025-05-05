@@ -4,3 +4,4 @@ earthengine-api==0.1.381
 pandas==2.2.2
 matplotlib==3.8.4
 streamlit-folium==0.18.0
+setuptools
