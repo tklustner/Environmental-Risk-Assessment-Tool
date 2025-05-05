@@ -58,7 +58,7 @@ earthengine authenticate
 
 ## 📸 Example Output
 
-![Example Output](Screenshot-2025-05-05-at-3.04.50-PM.png)
+![Example Output](example_output.png)
 
 ## 📝 Notes
 
