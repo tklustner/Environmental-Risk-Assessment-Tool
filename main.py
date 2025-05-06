@@ -119,7 +119,7 @@ if map_data and 'last_active_drawing' in map_data:
                     plt.xticks(rotation=45)
                     st.pyplot(fig, clear_figure=True, use_container_width=True)
 
-                    st.caption("NDVI Statistics")
+                    
                     cols = st.columns(3)
                     cols[0].metric("Average NDVI", f"{df_ndvi['NDVI'].mean():.2f}")
                     cols[1].metric("Max NDVI", f"{df_ndvi['NDVI'].max():.2f}")
