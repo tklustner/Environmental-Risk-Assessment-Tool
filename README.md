@@ -58,7 +58,7 @@ earthengine authenticate
 
 ## 📸 Example Output
 
-![Example Output](example_output.png)
+![Risk App Demo](risk_app_demo.gif)
 
 ## 📝 Notes
 
@@ -68,4 +68,4 @@ earthengine authenticate
 
 ---
 
-© 2025 • Built with Streamlit + Earth Engine
+© 2025 • Built with Streamlit + Geemap + Earth Engine
