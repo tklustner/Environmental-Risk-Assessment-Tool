@@ -1,10 +1,10 @@
 # 🌍 Environmental Risk Assessment Dashboard
 
-This Streamlit-based tool allows users to explore environmental risks for any selected area of interest (AOI) under 10,000 km². It integrates live Earth Engine data sources to monitor rainfall, soil moisture, and vegetation health, and automatically calculates a simple environmental risk score. Users can also download their data.
+This Streamlit-based tool enables users to assess environmental risks across any selected area of interest (AOI) of up to \~10,000 km². It integrates real-time data from Google Earth Engine and automates NDVI analysis, making remote sensing insights accessible to non-specialist users. With data download functionality and a lightweight design, the tool is well-suited for use in low-connectivity or disaster-prone settings. Its modular structure also supports the integration of additional metrics and predictive models as user needs evolve.
 
 ## 🚀 Features
 
-- **Interactive AOI selection** (Leaflet-based map with drawing tools)
+- **Interactive AOI selection** (Geemap-based map with drawing tools)
 - **Time series plots** of:
   - 🌧️ CHIRPS Rainfall (Jan 2024–Present)
   - 🌱 ERA5 Soil Moisture
