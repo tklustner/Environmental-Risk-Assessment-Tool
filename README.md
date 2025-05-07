@@ -4,7 +4,7 @@ This Streamlit-based tool enables users to assess environmental risks across any
 
 ## 🚀 Features
 
-- **Interactive AOI selection** (Geemap-based map with drawing tools)
+- **Interactive AOI selection** (Leaflet-based map with drawing tools)
 - **Time series plots** of:
   - 🌧️ CHIRPS Rainfall (Jan 2024–Present)
   - 🌱 ERA5 Soil Moisture
