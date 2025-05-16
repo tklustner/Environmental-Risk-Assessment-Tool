@@ -5,7 +5,7 @@ import json
 
 # Function to fetch CHIRPS data
 def get_chirps_data(aoi_geojson):
-    api_url = "https://climateservapi.servirglobal.net/api/chirps/"  # Example CHIRPS API endpoint
+    api_url = "https://climateservapi.servirglobal.net/api/chirps/"  
     payload = {
         "geometry": aoi_geojson,
         "start_date": "2023-01-01",
